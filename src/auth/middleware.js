@@ -4,23 +4,29 @@ const User = require('./users-model.js');
 
 module.exports = (req, res, next) => {
   
-  // Basic am9objpqb2hubnk=
-  // Bearer Token ...
   try {
     let [authType, authString] = req.headers.authorization.split(/\s+/);
     
     switch( authType.toLowerCase() ) {
-      case 'basic': 
-        return _authBasic(authString);
-      default: 
-        return _authError();
+    case 'basic': 
+      return _authBasic(authString);
+    case 'bearer':
+      return _authBearer(authString);
+    default: 
+      return _authError();
     }
   }
   catch(e) {
-    console.log(e);
+    console.log('Resource Not Available');
   }
   
   
+  /**
+   *
+   * Processes token that is encoded
+   * @param {str} str
+   * @returns string
+   */
   function _authBasic(str) {
     // str: am9objpqb2hubnk=
     let base64Buffer = Buffer.from(str, 'base64'); // <Buffer 01 02 ...>
@@ -33,6 +39,23 @@ module.exports = (req, res, next) => {
       .catch(next);
   }
 
+  /**
+   *
+   * Token string
+   * @param {str} str
+   * @returns function
+   */
+  function _authBearer(str) {
+    return User.authenticateToken(str)
+      .then(user => _authenticate(user) )
+      .catch(next);
+  }
+
+  /**
+   *
+   * User object from Mongo
+   * @param {obj} user
+   */
   function _authenticate(user) {
     console.log({user});
     if(user) {

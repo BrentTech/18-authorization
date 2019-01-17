@@ -21,6 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 
 // Routes
+app.use('/doc', express.static('doc'));
 app.use(authRouter);
 
 // Catchalls

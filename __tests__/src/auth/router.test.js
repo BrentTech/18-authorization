@@ -1,11 +1,13 @@
 'use strict';
 
+process.env.SECRET = 'changeit';
 process.env.STORAGE = 'mongo';
 
 const jwt = require('jsonwebtoken');
 
 const server = require('../../../src/app.js').server;
 const supergoose = require('../../supergoose.js');
+
 
 const mockRequest = supergoose.server(server);
 
@@ -31,11 +33,10 @@ describe('Auth Router', () => {
         return mockRequest.post('/signup')
           .send(users[userType])
           .then(results => {
-            var token = jwt.verify(results.text, process.env.SECRET || 'changeit');
+            var token = jwt.verify(results.text, process.env.SECRET);
             id = token.id;
             encodedToken = results.text;
             expect(token.id).toBeDefined();
-            expect(token.capabilities).toBeDefined();
           });
       });
 
@@ -43,9 +44,9 @@ describe('Auth Router', () => {
         return mockRequest.post('/signin')
           .auth(users[userType].username, users[userType].password)
           .then(results => {
-            var token = jwt.verify(results.text, process.env.SECRET || 'changeit');
+            var token = jwt.verify(results.text, process.env.SECRET);
             expect(token.id).toEqual(id);
-            expect(token.capabilities).toBeDefined();
+
           });
       });
 
