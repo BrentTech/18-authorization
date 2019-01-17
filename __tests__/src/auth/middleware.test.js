@@ -1,5 +1,6 @@
 'use strict';
 
+process.env.SECRET = 'changeit';
 const supergoose = require('../../supergoose.js');
 const auth = require('../../../src/auth/middleware.js');
 const Users = require('../../../src/auth/users-model.js');
@@ -15,7 +16,7 @@ beforeAll(async (done) => {
   const adminUser = await new Users(users.admin).save();
   const editorUser = await new Users(users.editor).save();
   const userUser = await new Users(users.user).save();
-  done()
+  done();
 });
 
 afterAll(supergoose.stopDB);
@@ -25,7 +26,7 @@ describe('Auth Middleware', () => {
   // admin:password: YWRtaW46cGFzc3dvcmQ=
   // admin:foo: YWRtaW46Zm9v
   
-  let errorObject = {"message": "Invalid User ID/Password", "status": 401, "statusMessage": "Unauthorized"};
+  let errorObject = 'Invalid User ID/Password';
   
   describe('user authentication', () => {
     

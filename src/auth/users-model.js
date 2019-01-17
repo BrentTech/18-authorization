@@ -4,11 +4,9 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const SINGLE_USE_TOKENS = !!process.env.SINGLE_USE_TOKENS;
-const TOKEN_EXPIRE = process.env.TOKEN_LIFETIME || '5m';
-const SECRET = process.env.SECRET || 'foobar';
+const SECRET = process.env.SECRET;
 
-const usedTokens = new Set();
+let usedTokens = new Set();
 
 const users = new mongoose.Schema({
   username: {type:String, required:true, unique:true},
@@ -42,7 +40,27 @@ users.statics.createFromOauth = function(email) {
       let password = 'none';
       return this.create({username, password, email});
     });
+};
 
+/**
+ *
+ * Verifies Token against JWT library
+ * @param {str} token
+ * @returns user object
+ */
+users.statics.authenticateToken = function(token) {
+  try {
+    if(usedTokens.has(token)) {
+      throw 'Resource Not Available';
+    } else {
+      usedTokens.add(token);
+      let parsedToken = jwt.verify(token, SECRET);
+      let query = {_id:parsedToken.id};
+      return this.findOne(query);    
+    }
+  } catch(e) {
+    throw new Error;
+  }
 };
 
 users.statics.authenticateBasic = function(auth) {
@@ -52,20 +70,30 @@ users.statics.authenticateBasic = function(auth) {
     .catch(error => {throw error;});
 };
 
+/**
+ *
+ * Compares password encryption with bcrypt
+ * @param {str} password
+ * @returns boolean
+ */
 users.methods.comparePassword = function(password) {
   return bcrypt.compare( password, this.password )
     .then( valid => valid ? this : null);
 };
 
+/**
+ *
+ * Creates token with JWT using user object
+ * @param {obj} type
+ * @returns signed jwt token
+ */
 users.methods.generateToken = function(type) {
-  
   let token = {
     id: this._id,
     role: this.role,
     type: type || 'user',
   };
-  
-  return jwt.sign(token, SECRET);
+  return jwt.sign(token, SECRET, { expiresIn: 60 });
 };
 
 users.methods.generateKey = function() {
